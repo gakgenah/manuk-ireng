@@ -1,0 +1,222 @@
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Adult Site — Template</title>
+  <meta name="description" content="Template landing for age-restricted content. Replace placeholders with your own assets and integrate server-side controls." />
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#ff5a7a;
+      --glass: rgba(255,255,255,0.04);
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg) 0%, #071021 100%);color:#e6eef8}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo .mark{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff8aa3);display:flex;align-items:center;justify-content:center;font-weight:700}
+    nav{display:flex;gap:14px;align-items:center}
+    a.btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit}
+    a.btn.primary{background:linear-gradient(90deg,var(--accent),#ff8aa3);border:none;color:#081226}
+    main{padding:28px;max-width:1200px;margin:20px auto}
+
+    /* Cards / gallery */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+    .card{background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(2,6,23,0.6);position:relative}
+    .thumb{width:100%;height:160px;object-fit:cover;display:block;filter:blur(8px) grayscale(10%);transform:scale(1.02)}
+    .meta{padding:12px}
+    .title{font-weight:600}
+    .action{display:flex;gap:8px;margin-top:10px}
+
+    /* locked overlay */
+    .locked{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;background:linear-gradient(180deg, rgba(2,6,23,0.45), rgba(2,6,23,0.6));backdrop-filter: blur(2px)}
+    .locked small{color:var(--muted)}
+
+    /* Age gate modal */
+    .modal-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(1,3,8,0.7);z-index:9999}
+    .modal{width:92%;max-width:520px;background:linear-gradient(180deg,#071226, #091526);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.04)}
+    .modal h2{margin:0 0 8px 0}
+    .modal p{color:var(--muted);margin:0 0 18px 0}
+    .modal .row{display:flex;gap:10px}
+
+    /* Forms */
+    form{display:flex;flex-direction:column;gap:10px}
+    input,button,select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+
+    footer{max-width:1200px;margin:28px auto;padding:20px;color:var(--muted);font-size:13px}
+
+    /* responsive tweaks */
+    @media (max-width:700px){.thumb{height:120px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="mark">AS</div>
+      <div>
+        <div style="font-weight:700">AdultSite</div>
+        <div style="font-size:12px;color:var(--muted)">Age-restricted demo</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#home" class="btn">Home</a>
+      <a href="#gallery" class="btn">Gallery</a>
+      <a href="#login" class="btn">Login</a>
+      <a href="#register" class="btn primary">Join</a>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- content injected by JS router -->
+  </main>
+
+  <footer>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div><strong>Privacy & Compliance</strong></div>
+      <div>Anda bertanggung jawab untuk memastikan usia pengunjung, moderasi konten, dan perlindungan data sesuai hukum setempat.</div>
+    </div>
+  </footer>
+
+  <!-- Age Gate Modal -->
+  <div id="ageGate" class="modal-backdrop" aria-hidden="false">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ageTitle">
+      <h2 id="ageTitle">Konfirmasi Usia</h2>
+      <p>Konten di situs ini dibatasi untuk pengunjung berusia 18 tahun ke atas. Masukkan konfirmasi untuk melanjutkan.</p>
+      <div style="margin-bottom:12px;">Pilih usia</div>
+      <div class="row" style="margin-bottom:12px">
+        <select id="ageYear">
+          <!-- years populated by JS -->
+        </select>
+        <select id="ageMonth">
+          <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+          <option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Agu</option><option value="9">Sep</option>
+          <option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="btnLeave" class="btn">Keluar</button>
+        <button id="btnEnter" class="btn primary">Saya Berusia 18+</button>
+      </div>
+      <div style="margin-top:12px;color:var(--muted);font-size:13px">Catatan: Template ini hanya melakukan pemeriksaan client-side sederhana. Gunakan solusi verifikasi usia yang sah untuk produksi.</div>
+    </div>
+  </div>
+
+  <script>
+    /* Simple client-side router + page render */
+    const app = document.getElementById('app');
+    const ageGate = document.getElementById('ageGate');
+
+    function renderHome(){
+      app.innerHTML = `
+        <section style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            <h1>Selamat datang</h1>
+            <p style="color:var(--muted)">Demo halaman utama untuk situs dengan konten terbatas usia. Ganti teks ini dengan ringkasan layanan, kebijakan, dan panggilan ke tindakan.</p>
+            <div style="margin-top:12px"><a href="#gallery" class="btn primary">Lihat preview</a></div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <div style="background:var(--glass);padding:16px;border-radius:12px">
+              <strong>Keamanan</strong>
+              <p style="color:var(--muted);margin:8px 0 0 0">Pastikan verifikasi usia, perlindungan data, dan moderasi konten diterapkan di server.</p>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGallery(){
+      // sample thumbnails (placeholders). Replace with server data.
+      const items = Array.from({length:12}).map((_,i)=>({id:i+1,title:`Preview ${i+1}`,img:`https://picsum.photos/seed/adult${i}/600/400`}));
+      app.innerHTML = `<h2>Gallery preview</h2><div class="grid">${items.map(it=>`
+        <article class="card">
+          <img class="thumb" src="${it.img}" alt="${it.title}" loading="lazy" />
+          <div class="meta">
+            <div class="title">${it.title}</div>
+            <div class="action"><button class="btn" onclick="viewLocked(${it.id})">Lihat</button><button class="btn">Favorit</button></div>
+          </div>
+          <div class="locked">
+            <div style="font-size:18px;font-weight:700">Terkunci</div>
+            <small>Konten ini hanya dapat dilihat setelah login & verifikasi usia.</small>
+            <div style="margin-top:10px"><button class="btn primary" onclick="location.hash='register'">Daftar</button></div>
+          </div>
+        </article>
+      `).join('')}</div>`;
+    }
+
+    function renderLogin(){
+      app.innerHTML = `<h2>Login</h2>
+        <form onsubmit="event.preventDefault();alert('Form login placeholder — implement server-side auth')">
+          <input placeholder="Email" type="email" required />
+          <input placeholder="Password" type="password" required />
+          <div style="display:flex;gap:8px"><button class="btn" type="submit">Masuk</button><button class="btn" type="button" onclick="location.hash='register'">Daftar</button></div>
+        </form>`;
+    }
+
+    function renderRegister(){
+      app.innerHTML = `<h2>Register</h2>
+        <form onsubmit="event.preventDefault();alert('Form register placeholder — connect to server & age checks')">
+          <input placeholder="Email" type="email" required />
+          <input placeholder="Password" type="password" required />
+          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" required /> Saya menyatakan berusia 18 tahun ke atas</label>
+          <button class="btn primary" type="submit">Buat akun</button>
+        </form>`;
+    }
+
+    function viewLocked(id){
+      alert('Konten dikunci. Implementasikan akses setelah verifikasi dan pembayaran di server. ID: '+id);
+    }
+
+    function router(){
+      const route = location.hash.replace('#','') || 'home';
+      if(route.startsWith('gallery')) renderGallery();
+      else if(route.startsWith('login')) renderLogin();
+      else if(route.startsWith('register')) renderRegister();
+      else renderHome();
+    }
+
+    window.addEventListener('hashchange',router);
+    router();
+
+    /* Age gate handling (client-side only) */
+    const btnEnter = document.getElementById('btnEnter');
+    const btnLeave = document.getElementById('btnLeave');
+    const ageYear = document.getElementById('ageYear');
+
+    // populate years (1900..current)
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    for(let y=currentYear;y>=1900;y--){
+      const opt = document.createElement('option'); opt.value = y; opt.text = y; ageYear.appendChild(opt);
+    }
+
+    btnLeave.addEventListener('click',()=>{
+      // Send user away — simple behavior: navigate to search or close tab.
+      ageGate.style.display='none';
+      document.body.innerHTML = '<div style="height:100vh;display:flex;align-items:center;justify-content:center;color:#cbd5e1"><div><h2>Anda meninggalkan situs</h2><p style="color:#94a3b8">Halaman ini berisi konten terbatas usia.</p></div></div>';
+    });
+
+    btnEnter.addEventListener('click',()=>{
+      // simple age check
+      const year = parseInt(ageYear.value,10);
+      const age = currentYear - year;
+      if(age >= 18){
+        // persist a session flag (local only) — replace with secure server flag in prod
+        localStorage.setItem('adult_allowed', '1');
+        ageGate.style.display='none';
+        ageGate.setAttribute('aria-hidden','true');
+      } else {
+        alert('Anda harus berusia 18 tahun atau lebih untuk melanjutkan.');
+      }
+    });
+
+    // Do not show modal again if localStorage flag present
+    if(localStorage.getItem('adult_allowed') === '1'){
+      ageGate.style.display='none';
+      ageGate.setAttribute('aria-hidden','true');
+    }
+
+    // Accessibility: escape to close not allowed — keep modal mandatory until verification
+  </script>
+</body>
+</html>
